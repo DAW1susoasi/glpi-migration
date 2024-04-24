@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7.23
+    container_name: mysql
+    hostname: mysqldb
+    volumes:
+      - ./dump:/docker-entrypoint-initdb.d
+      - /glpi/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=diouxx
+      - MYSQL_DATABASE=glpidb
+      - MYSQL_USER=glpi_user
+      - MYSQL_PASSWORD=glpi
+    healthcheck:
+      test: ["CMD", "mysqladmin", "-h", "127.0.0.1", "-u", "loquesea", "-ploquesea", "ping"]
+      interval: 2m
+      retries: 10
+    restart: unless-stopped
+
+  glpi:
+    # La imagen se contruirá con el Dockerfile cuyo ENTRYPOINT es un script
+    build: .
+    container_name: glpi
+    hostname: glpi
+    ports:
+      - 8080:80
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /glpi/apache:/var/www/html/glpi
+      - ./glpi-start.sh:/opt/glpi-start.sh
+    environment:
+      # Si no le pasamos versión te instala la última, a 15/4/2024 la 10.0.14
+      - VERSION_GLPI=9.5.3
+      - TIMEZONE=Europe/Madrid
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped

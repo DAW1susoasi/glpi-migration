@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7.23
+    container_name: mysql
+    hostname: mysqldb
+    volumes:
+      - ./dump:/docker-entrypoint-initdb.d
+      - /glpi/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=diouxx
+      - MYSQL_DATABASE=glpidb
+      - MYSQL_USER=glpi_user
+      - MYSQL_PASSWORD=glpi
+    restart: unless-stopped
+
+  glpi:
+    image: glpi-glpi:latest
+    container_name: glpi
+    hostname: glpi
+    ports:
+      - 8080:80
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /glpi/apache:/var/www/html/glpi
+      - ./glpi-start.sh:/opt/glpi-start.sh
+    environment:
+      - VERSION_GLPI=9.5.3
+      - TIMEZONE=Europe/Madrid
+    depends_on:
+      - mysql
+    restart: unless-stopped
